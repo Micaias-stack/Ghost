@@ -6,7 +6,7 @@ API_KEY = "import streamlit as st
 from groq import Groq
 
 # --- CONFIGURAÇÃO DA CHAVE ---
-API_KEY = "SUA_CHAVE_AQUI"
+API_KEY = "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"
 client = Groq(api_key=API_KEY)
 
 # Configuração Mobile iPhone
